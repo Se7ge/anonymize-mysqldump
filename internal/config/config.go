@@ -2,11 +2,11 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"syreclabs.com/go/faker"
 	"text/template"
 
@@ -49,20 +49,20 @@ type Template struct {
 }
 
 var tplFuncMap = template.FuncMap{
-	"fakerInternet": faker.Internet(),
-	"fakerUser":     faker.Name(),
-	"fakerAddress":  faker.Address(),
-	"fakerNumber":   faker.Number(),
+	"fakerInternet": faker.Internet,
+	"fakerUser":     faker.Internet().UserName,
+	"fakerAddress":  faker.Address().String,
 }
 
 func (t *Template) UnmarshalJSON(data []byte) error {
-	var v []byte
+	var v string
 
 	if err := json.Unmarshal(data, &v); err != nil {
+		fmt.Printf("failed unmarshaling response | %s", err.Error())
 		return err
 	}
 	if data != nil {
-		t.Tpl = template.Must(template.New("template").Funcs(tplFuncMap).Parse(string(v)))
+		t.Tpl = template.Must(template.New("template").Funcs(tplFuncMap).Parse(v))
 	}
 	return nil
 }
@@ -102,9 +102,7 @@ func (c *Config) ParseConfig(filepath string) {
 		}
 	}
 
-	jsonReader := strings.NewReader(string(jsonConfig))
-	jsonParser := json.NewDecoder(jsonReader)
-	err = jsonParser.Decode(c)
+	err = json.Unmarshal(jsonConfig, &c)
 
 	// Make sure the JSON read is valid.
 	if err != nil {

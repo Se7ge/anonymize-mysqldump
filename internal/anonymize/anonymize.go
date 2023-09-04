@@ -299,6 +299,7 @@ func modifyValues(values sqlparser.Values, pattern config.ConfigPattern) (sqlpar
 				var buf bytes.Buffer
 				if err := fieldPattern.Template.Tpl.Execute(&buf, values[row]); err != nil {
 					log.Printf("Error: executing template: %v", err)
+					continue
 				}
 				values[row][valTupleIndex] = sqlparser.NewStrVal(buf.Bytes())
 			} else {
