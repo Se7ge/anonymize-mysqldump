@@ -2,6 +2,7 @@ package anonymize
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -276,7 +277,7 @@ func modifyValues(values sqlparser.Values, pattern config.ConfigPattern) (sqlpar
 			}
 
 			// Skip transformation if transforming function doesn't exist
-			if transformationFunctionMap[fieldPattern.Type] == nil {
+			if transformationFunctionMap[fieldPattern.Type] == nil && fieldPattern.Template.Tpl == nil {
 				// TODO in the event a transformation function isn't correctly defined,
 				// should we actually exit? Should we exit or fail softly whenever
 				// something goes wrong in general?
@@ -294,7 +295,15 @@ func modifyValues(values sqlparser.Values, pattern config.ConfigPattern) (sqlpar
 				continue
 			}
 
-			values[row][valTupleIndex] = transformationFunctionMap[fieldPattern.Type](value)
+			if fieldPattern.Template.Tpl != nil {
+				var buf bytes.Buffer
+				if err := fieldPattern.Template.Tpl.Execute(&buf, values[row]); err != nil {
+					log.Printf("Error: executing template: %v", err)
+				}
+				values[row][valTupleIndex] = sqlparser.NewStrVal(buf.Bytes())
+			} else {
+				values[row][valTupleIndex] = transformationFunctionMap[fieldPattern.Type](value)
+			}
 		}
 
 	}

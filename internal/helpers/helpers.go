@@ -119,5 +119,5 @@ func generateShortString(value *sqlparser.SQLVal) *sqlparser.SQLVal {
 }
 
 func generateEmptyString(value *sqlparser.SQLVal) *sqlparser.SQLVal {
-     return sqlparser.NewStrVal([]byte(""))
+	return sqlparser.NewStrVal([]byte(""))
 }

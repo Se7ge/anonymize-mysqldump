@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syreclabs.com/go/faker"
+	"text/template"
 
 	"github.com/DekodeInteraktiv/anonymize-mysqldump/internal/embed"
 )
@@ -32,6 +34,7 @@ type PatternField struct {
 	Field       string                   `json:"field"`
 	Position    int                      `json:"position"`
 	Type        string                   `json:"type"`
+	Template    Template                 `json:"template"`
 	Constraints []PatternFieldConstraint `json:"constraints"`
 }
 
@@ -39,6 +42,29 @@ type PatternFieldConstraint struct {
 	Field    string `json:"field"`
 	Position int    `json:"position"`
 	Value    string `json:"value"`
+}
+
+type Template struct {
+	Tpl *template.Template
+}
+
+var tplFuncMap = template.FuncMap{
+	"fakerInternet": faker.Internet(),
+	"fakerUser":     faker.Name(),
+	"fakerAddress":  faker.Address(),
+	"fakerNumber":   faker.Number(),
+}
+
+func (t *Template) UnmarshalJSON(data []byte) error {
+	var v []byte
+
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	if data != nil {
+		t.Tpl = template.Must(template.New("template").Funcs(tplFuncMap).Parse(string(v)))
+	}
+	return nil
 }
 
 // New creates a new Config from flags and environment variables
