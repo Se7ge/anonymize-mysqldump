@@ -2,11 +2,13 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
+	"syreclabs.com/go/faker"
+	"text/template"
 
 	"github.com/DekodeInteraktiv/anonymize-mysqldump/internal/embed"
 )
@@ -32,6 +34,7 @@ type PatternField struct {
 	Field       string                   `json:"field"`
 	Position    int                      `json:"position"`
 	Type        string                   `json:"type"`
+	Template    Template                 `json:"template"`
 	Constraints []PatternFieldConstraint `json:"constraints"`
 }
 
@@ -39,6 +42,29 @@ type PatternFieldConstraint struct {
 	Field    string `json:"field"`
 	Position int    `json:"position"`
 	Value    string `json:"value"`
+}
+
+type Template struct {
+	Tpl *template.Template
+}
+
+var tplFuncMap = template.FuncMap{
+	"fakerInternet": faker.Internet,
+	"fakerUser":     faker.Internet().UserName,
+	"fakerAddress":  faker.Address().String,
+}
+
+func (t *Template) UnmarshalJSON(data []byte) error {
+	var v string
+
+	if err := json.Unmarshal(data, &v); err != nil {
+		fmt.Printf("failed unmarshaling response | %s", err.Error())
+		return err
+	}
+	if data != nil {
+		t.Tpl = template.Must(template.New("template").Funcs(tplFuncMap).Parse(v))
+	}
+	return nil
 }
 
 // New creates a new Config from flags and environment variables
@@ -76,9 +102,7 @@ func (c *Config) ParseConfig(filepath string) {
 		}
 	}
 
-	jsonReader := strings.NewReader(string(jsonConfig))
-	jsonParser := json.NewDecoder(jsonReader)
-	err = jsonParser.Decode(c)
+	err = json.Unmarshal(jsonConfig, &c)
 
 	// Make sure the JSON read is valid.
 	if err != nil {

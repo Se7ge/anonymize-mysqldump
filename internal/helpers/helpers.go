@@ -32,6 +32,7 @@ func GetFakerFuncs() map[string]func(*sqlparser.SQLVal) *sqlparser.SQLVal {
 		"creditCardExpiryDate": generateCreditCardExpiryDate,
 		"creditCardType":       generateCreditCardType,
 		"purge":                generateEmptyString,
+		"template":             nil,
 	}
 
 	return fakerHelpers
@@ -119,5 +120,5 @@ func generateShortString(value *sqlparser.SQLVal) *sqlparser.SQLVal {
 }
 
 func generateEmptyString(value *sqlparser.SQLVal) *sqlparser.SQLVal {
-     return sqlparser.NewStrVal([]byte(""))
+	return sqlparser.NewStrVal([]byte(""))
 }
