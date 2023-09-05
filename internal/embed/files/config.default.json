@@ -30,7 +30,8 @@
         {
           "field": "user_url",
           "position": 6,
-          "type": "url",
+          "type": "template",
+          "template": "{{printf \"%s\" (index . 0).Val }}_{{fakerInternet.Url}}",
           "constraints": null
         },
         {
